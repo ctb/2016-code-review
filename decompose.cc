@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string>
 
+//
+// these are givens - let's assume this code works.
+//
+
 typedef unsigned long long HashType;
 
 #define uniqify_rc(f, r) ((f) < (r) ? (f) : (r))
@@ -39,6 +43,14 @@ void increment_count(HashType kmer)
   // stub code, for demo purposes
   std::cout << kmer << "\n";
 }
+
+//
+// this is the function we're going to be looking at today.
+// it's an optimized version of a function that extracts all
+// DNA substrings of length k, calculates their forward and
+// reverse-complement hashes, chooses the lower of the two, and
+// passes that value to increment_count.
+//
 
 void count_kmers(const std::string &s, const unsigned int k)
 {
