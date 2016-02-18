@@ -52,6 +52,16 @@ void increment_count(HashType kmer)
 // passes that value to increment_count.
 //
 
+void XXXXXcount_kmers(const std::string &s, const unsigned int k)
+{
+  HashType f, r;
+  for (unsigned int i = 0; i < s.length() - k + 1; i++) {
+    HashType h = _hash(s.c_str() + i, k, f, r);
+    h = uniqify_rc(f, r);
+    increment_count(h);
+  }
+}
+
 void count_kmers(const std::string &s, const unsigned int k)
 {
   const char * sp = s.c_str();
