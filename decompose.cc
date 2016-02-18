@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cassert>
 
 //
 // these are givens - let's assume this code works.
@@ -44,6 +45,55 @@ void increment_count(HashType kmer)
   std::cout << kmer << "\n";
 }
 
+class KmerIterator {
+public:
+  HashType bitmask;
+  HashType forward, reverse;
+  std::string _dna;
+  int _ksize;
+  int idx;
+  
+  KmerIterator(int ksize,
+               std::string dna_string) {
+
+    forward = 0;
+    reverse = 0;
+    bitmask = 0;
+    _dna = dna_string;
+    _ksize = ksize;
+    idx = 0;
+    
+    // now fill bitmask with ones out to 2*k
+    for (unsigned char i = 0; i < ksize; i++) {
+      bitmask = (bitmask << 2) | 3;
+    }
+  }
+
+  HashType first() {
+    idx = _ksize;
+    return _hash(_dna.c_str(), _ksize, forward, reverse);
+  }
+
+  HashType next() {
+    char ch = _dna[idx];
+    idx++;
+    
+    // take the last character in the window, which is sp[i];
+    // add it to the hash of the forward strand.
+    forward = forward << 2;
+    forward |= twobit_repr(ch);
+    forward &= bitmask;
+
+    // add to the hash of the reverse strand.
+    reverse = reverse >> 2;
+    reverse |= (twobit_comp(ch) << (_ksize*2 - 2));
+
+    // choose a unique representation of this k-mer
+    return uniqify_rc(forward, reverse);
+  }
+  
+};
+
 //
 // this is the function we're going to be looking at today.
 // it's an optimized version of a function that extracts all
@@ -56,34 +106,14 @@ void count_kmers(const std::string &s, const unsigned int ksize)
 {
   const char * sp = s.c_str();
 
-  HashType bitmask = 0;
-  // now fill bitmask with ones out to 2*k
-  for (unsigned char i = 0; i < ksize; i++) {
-    bitmask = (bitmask << 2) | 3;
-  }
+  KmerIterator it(ksize, s);
 
-  HashType forward, reverse;
-  HashType hash = _hash(sp, ksize, forward, reverse);
+  HashType hash = it.first();
   increment_count(hash);
 
   // start at end of first window, go to end of sequence.
   for (unsigned int i = ksize; i < s.length(); i++) {
-    // extract the C string
-    unsigned char ch = sp[i];
-
-    // take the last character in the window, which is sp[i];
-    // add it to the hash of the forward strand.
-    forward = forward << 2;
-    forward |= twobit_repr(ch);
-    forward &= bitmask;
-
-    // add to the hash of the reverse strand.
-    reverse = reverse >> 2;
-    reverse |= (twobit_comp(ch) << (ksize*2 - 2));
-
-    // choose a unique representation of this k-mer
-    hash = uniqify_rc(forward, reverse);
-
+    hash = it.next();
     increment_count(hash);
   }
 }
