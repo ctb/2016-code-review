@@ -52,39 +52,39 @@ void increment_count(HashType kmer)
 // passes that value to increment_count.
 //
 
-void count_kmers(const std::string &s, const unsigned int k)
+void count_kmers(const std::string &s, const unsigned int ksize)
 {
   const char * sp = s.c_str();
 
   HashType bitmask = 0;
   // now fill bitmask with ones out to 2*k
-  for (unsigned char i = 0; i < k; i++) {
+  for (unsigned char i = 0; i < ksize; i++) {
     bitmask = (bitmask << 2) | 3;
   }
 
-  HashType f, r;
-  HashType h = _hash(sp, k, f, r);
-  increment_count(h);
+  HashType forward, reverse;
+  HashType hash = _hash(sp, ksize, forward, reverse);
+  increment_count(hash);
 
   // start at end of first window, go to end of sequence.
-  for (unsigned int i = k; i < s.length(); i++) {
+  for (unsigned int i = ksize; i < s.length(); i++) {
     // extract the C string
     unsigned char ch = sp[i];
 
     // take the last character in the window, which is sp[i];
     // add it to the hash of the forward strand.
-    f = f << 2;
-    f |= twobit_repr(ch);
-    f &= bitmask;
+    forward = forward << 2;
+    forward |= twobit_repr(ch);
+    forward &= bitmask;
 
     // add to the hash of the reverse strand.
-    r = r >> 2;
-    r |= (twobit_comp(ch) << (k*2 - 2));
+    reverse = reverse >> 2;
+    reverse |= (twobit_comp(ch) << (ksize*2 - 2));
 
     // choose a unique representation of this k-mer
-    h = uniqify_rc(f, r);
+    hash = uniqify_rc(forward, reverse);
 
-    increment_count(h);
+    increment_count(hash);
   }
 }
 
